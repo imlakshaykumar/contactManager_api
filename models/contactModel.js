@@ -1,18 +1,17 @@
 const mongoose = require("mongoose");
 
 const contactSchema = mongoose.Schema({
-  firstName: {
+  name: {
     type: String,
-    required: true,
+    required: [true, "add the contact name: "],
   },
-  lastName: String,
   phone: {
     type: String,
-    required: true,
+    required: [true, "add the phone number: "],
   },
   email: {
     type: String,
-    required: true,
+    required: [true, "add the email address: "],
   },
 });
 

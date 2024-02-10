@@ -2,27 +2,26 @@ const contactModel = require("../models/contactModel");
 
 const contactControl = {
   async allContacts(_req, res) {
-    try {
-      const contacts = await contactModel.find();
-      return res.status(200).json({ contacts });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
+    const contacts = await contactModel.find();
+    return res.status(200).json(contacts);
   },
+
   async createContact(req, res) {
     try {
-      const { firstName, lastName, phone, email } = req.body;
+      const { name, phone, email } = req.body;
+
+      if (!name || !email || !phone) {
+        res.status(400);
+        throw new Error("All fields ate mandatory...");
+      }
 
       const newContact = new contactModel({
-        firstName,
-        lastName,
+        name,
         phone,
         email,
       });
 
       await newContact.save();
-
-      // res.send("hello");
 
       return res
         .status(201)
@@ -34,10 +33,39 @@ const contactControl = {
     }
   },
 
+  async getContact(req, res) {
+    try {
+      const contact = await contactModel.findById(req.params.id);
+      if (!contact) {
+        res.send(404);
+        throw new Error("Contact not found");
+      }
+      res.send(200).json(contact);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: error.message || "Internal Server Error" });
+    }
+  },
+
   async updateContact(req, res) {
     try {
-      const { emailId } = req.params;
+      const contact = await contactModel.findById(req.params.id);
+      if (!contact) {
+        res.status(404);
+        throw new Error("Contact not found");
+      }
 
+      const updatedContact = await contactModel.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true },
+      );
+
+      await contact.save();
+
+      /*
+      const { emailId } = req.params;
       const { email, firstName, lastName, phone } = req.body;
 
       let contact = await contactModel.findOne(emailId);
@@ -52,10 +80,10 @@ const contactControl = {
       contact.email = email;
 
       await contact.save();
-
+      */
       return res
         .status(200)
-        .json({ message: "contact updates successfully", contact });
+        .json({ message: "contact updates successfully", updatedContact });
     } catch (error) {
       return res
         .status(500)
@@ -64,14 +92,13 @@ const contactControl = {
   },
   async deleteContact(req, res) {
     try {
-      const { emailId } = req.params;
-
-      const deletedContact = await contactModel.findOneAndDelete(emailId);
+      //const { emailId } = req.params;
+      const deletedContact = await contactModel.findOneAndDelete(req.params.id);
 
       if (!deletedContact) {
-        return res.status(404).json({ message: "contact not found" });
+        res.status(404);
+        throw new Error("Contact not found");
       }
-
       return res
         .status(200)
         .json({ message: "Contact Deleted", deletedContact });
